@@ -3,6 +3,7 @@ package io.github.ktlint.core.ruleset.standard.rules
 import com.intellij.lang.ASTNode
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl
+import io.github.ktlint.core.rule.engine.core.api.ElementType.ANNOTATED_EXPRESSION
 import io.github.ktlint.core.rule.engine.core.api.ElementType.BLOCK
 import io.github.ktlint.core.rule.engine.core.api.ElementType.ELSE
 import io.github.ktlint.core.rule.engine.core.api.ElementType.ELSE_KEYWORD
@@ -102,6 +103,13 @@ public class IfElseBracingRule :
 
             elementType == IF -> {
                 findChildByType(THEN).hasBracing() || findChildByType(ELSE).hasBracing()
+            }
+
+            elementType == ANNOTATED_EXPRESSION -> {
+                // An annotated block in the body of a control structure, like
+                //     if (true) @Suppress("DEPRECATION") { foo() }
+                // is parsed as an ANNOTATED_EXPRESSION wrapping a BLOCK (and not a lambda).
+                lastChildNode?.elementType == BLOCK
             }
 
             else -> {

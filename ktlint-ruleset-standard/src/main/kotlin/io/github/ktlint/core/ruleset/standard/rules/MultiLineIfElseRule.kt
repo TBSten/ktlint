@@ -3,6 +3,7 @@ package io.github.ktlint.core.ruleset.standard.rules
 import com.intellij.lang.ASTNode
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl
+import io.github.ktlint.core.rule.engine.core.api.ElementType.ANNOTATED_EXPRESSION
 import io.github.ktlint.core.rule.engine.core.api.ElementType.BINARY_EXPRESSION
 import io.github.ktlint.core.rule.engine.core.api.ElementType.BLOCK
 import io.github.ktlint.core.rule.engine.core.api.ElementType.DOT_QUALIFIED_EXPRESSION
@@ -77,7 +78,24 @@ public class MultiLineIfElseRule :
             !elseIfFollowedByDotQualifiedExpression() &&
             !isSimpleSingleLineIfStatement()
 
-    private fun ASTNode.isWrappedInBlock(): Boolean = firstChildNode?.elementType == BLOCK
+    private fun ASTNode.isWrappedInBlock(): Boolean =
+        when (firstChildNode?.elementType) {
+            BLOCK -> {
+                true
+            }
+
+            ANNOTATED_EXPRESSION -> {
+                // An annotated block in the body of a control structure, like
+                //     if (true) @Suppress("DEPRECATION") { foo() }
+                // is parsed as an ANNOTATED_EXPRESSION wrapping a BLOCK (and not a lambda). Wrapping it inside another block would change
+                // the semantics as the inner block would then be parsed as an (unused) lambda.
+                firstChildNode.lastChildNode?.elementType == BLOCK
+            }
+
+            else -> {
+                false
+            }
+        }
 
     // Allow
     // val foo2 = if (bar1) {
