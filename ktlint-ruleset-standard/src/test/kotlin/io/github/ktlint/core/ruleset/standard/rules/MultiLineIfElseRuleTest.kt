@@ -789,4 +789,3 @@ class MultiLineIfElseRuleTest {
             .isFormattedAs(formattedCode)
     }
 }
-
