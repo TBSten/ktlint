@@ -386,4 +386,63 @@ class IfElseBracingRuleTest {
             .hasLintViolation(1, 22, "All branches of the if statement should be wrapped between braces if at least one branch is wrapped between braces")
             .isFormattedAs(formattedCode)
     }
+
+    @Test
+    fun `Given an if-else-statement with an annotated block in the else branch then do not wrap the annotated block in another block`() {
+        val code =
+            """
+            fun foo(bar: Boolean) {
+                if (bar) {
+                    doSomething()
+                } else @Suppress("DEPRECATION") {
+                    doSomethingDeprecated()
+                }
+            }
+            """.trimIndent()
+        multiLineIfElseRuleAssertThat(code).hasNoLintViolations()
+    }
+
+    @Test
+    fun `Given an if-else-statement with an annotated block in the then branch then do not wrap the annotated block in another block`() {
+        val code =
+            """
+            fun foo(bar: Boolean) {
+                if (bar) @Suppress("DEPRECATION") {
+                    doSomethingDeprecated()
+                } else {
+                    doSomething()
+                }
+            }
+            """.trimIndent()
+        multiLineIfElseRuleAssertThat(code).hasNoLintViolations()
+    }
+
+    @Test
+    fun `Given an if-else-statement with an annotated block in the then branch and no braces in the else branch then wrap the else branch in a block`() {
+        val code =
+            """
+            fun foo(bar: Boolean) {
+                if (bar) @Suppress("DEPRECATION") {
+                    doSomethingDeprecated()
+                } else doSomething()
+            }
+            """.trimIndent()
+        val formattedCode =
+            """
+            fun foo(bar: Boolean) {
+                if (bar) @Suppress("DEPRECATION") {
+                    doSomethingDeprecated()
+                } else {
+                    doSomething()
+                }
+            }
+            """.trimIndent()
+        multiLineIfElseRuleAssertThat(code)
+            .hasLintViolation(
+                4,
+                12,
+                "All branches of the if statement should be wrapped between braces if at least one branch is wrapped between braces",
+            ).isFormattedAs(formattedCode)
+    }
 }
+

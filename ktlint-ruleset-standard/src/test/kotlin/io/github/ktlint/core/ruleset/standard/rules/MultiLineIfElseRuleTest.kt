@@ -717,4 +717,76 @@ class MultiLineIfElseRuleTest {
             """.trimIndent()
         multiLineIfElseRuleAssertThat(code).hasNoLintViolations()
     }
+
+    @Test
+    fun `Given an if-else-statement with an annotated block in the else branch then do not wrap the annotated block in another block`() {
+        val code =
+            """
+            fun foo(bar: Boolean) {
+                if (bar) {
+                    doSomething()
+                } else @Suppress("DEPRECATION") {
+                    doSomethingDeprecated()
+                }
+            }
+            """.trimIndent()
+        multiLineIfElseRuleAssertThat(code).hasNoLintViolations()
+    }
+
+    @Test
+    fun `Given an if-else-statement with an annotated block in the then branch then do not wrap the annotated block in another block`() {
+        val code =
+            """
+            fun foo(bar: Boolean) {
+                if (bar) @Suppress("DEPRECATION") {
+                    doSomethingDeprecated()
+                } else {
+                    doSomething()
+                }
+            }
+            """.trimIndent()
+        multiLineIfElseRuleAssertThat(code).hasNoLintViolations()
+    }
+
+    @Test
+    fun `Given an if-else-statement with a block having multiple annotations then do not wrap the annotated block in another block`() {
+        val code =
+            """
+            fun foo(bar: Boolean) {
+                if (bar) {
+                    doSomething()
+                } else @Suppress("DEPRECATION") @OptIn(ExperimentalFoo::class) {
+                    doSomethingDeprecated()
+                }
+            }
+            """.trimIndent()
+        multiLineIfElseRuleAssertThat(code).hasNoLintViolations()
+    }
+
+    @Test
+    fun `Given a multiline if-else-statement with an annotated expression which is not a block in the else branch then wrap it in a block`() {
+        val code =
+            """
+            fun foo(bar: Boolean) {
+                if (bar) {
+                    doSomething()
+                } else
+                    @Suppress("DEPRECATION") doSomethingDeprecated()
+            }
+            """.trimIndent()
+        val formattedCode =
+            """
+            fun foo(bar: Boolean) {
+                if (bar) {
+                    doSomething()
+                } else {
+                    @Suppress("DEPRECATION") doSomethingDeprecated()
+                }
+            }
+            """.trimIndent()
+        multiLineIfElseRuleAssertThat(code)
+            .hasLintViolation(5, 9, "Missing { ... }")
+            .isFormattedAs(formattedCode)
+    }
 }
+
